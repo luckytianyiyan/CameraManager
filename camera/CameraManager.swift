@@ -188,7 +188,7 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
     //Properties to set focus and capture mode when tap to focus is used (_focusStart)
     open var focusMode : AVCaptureFocusMode = .continuousAutoFocus
     open var exposureMode: AVCaptureExposureMode = .continuousAutoExposure
-    
+    open var focusRectangleColor: UIColor = UIColor(red:1, green:0.83, blue:0, alpha:0.95)
     
     // MARK: - Private properties
     
@@ -707,7 +707,7 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
         let shapeLayer = CAShapeLayer()
         shapeLayer.path = endPath.cgPath
         shapeLayer.fillColor = UIColor.clear.cgColor
-        shapeLayer.strokeColor = UIColor(red:1, green:0.83, blue:0, alpha:0.95).cgColor
+        shapeLayer.strokeColor = focusRectangleColor.cgColor
         shapeLayer.lineWidth = 1.0
         
         layer.addSublayer(shapeLayer)
