@@ -78,20 +78,6 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
     
     open var shouldKeepViewAtOrientationChanges = false
     
-    /// Property to determine if manager should enable tap to focus on camera preview. Default value is true.
-    open var shouldEnableTapToFocus = true {
-        didSet {
-            focusGesture.isEnabled = shouldEnableTapToFocus
-        }
-    }
-    
-    /// Property to determine if manager should enable pinch to zoom on camera preview. Default value is true.
-    open var shouldEnablePinchToZoom = true {
-        didSet {
-            zoomGesture.isEnabled = shouldEnablePinchToZoom
-        }
-    }
-    
     /// The Bool property to determine if the camera is ready to use.
     open var cameraIsReady: Bool {
         get {
@@ -188,10 +174,10 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
     //Properties to set focus and capture mode when tap to focus is used (_focusStart)
     open var focusMode : AVCaptureFocusMode = .continuousAutoFocus
     open var exposureMode: AVCaptureExposureMode = .continuousAutoExposure
-    open var focusRectangleColor: UIColor = UIColor(red:1, green:0.83, blue:0, alpha:0.95)
     
-    private(set) lazy var zoomGesture = UIPinchGestureRecognizer()
-    private(set) lazy var focusGesture = UITapGestureRecognizer()
+    public lazy var gestureController: CameraGestureController = {
+        return CameraGestureController(manager: self)
+    }()
     
     // MARK: - Private properties
     
@@ -202,11 +188,11 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
     
     fileprivate var sessionQueue: DispatchQueue = DispatchQueue(label: "CameraSessionQueue", attributes: [])
     
-    fileprivate lazy var frontCameraDevice: AVCaptureDevice? = {
+    lazy var frontCameraDevice: AVCaptureDevice? = {
         return AVCaptureDevice.videoDevices.filter { $0.position == .front }.first
     }()
     
-    fileprivate lazy var backCameraDevice: AVCaptureDevice? = {
+    lazy var backCameraDevice: AVCaptureDevice? = {
         return AVCaptureDevice.videoDevices.filter { $0.position == .back }.first
     }()
     
@@ -216,17 +202,15 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
     
     fileprivate var stillImageOutput: AVCaptureStillImageOutput?
     fileprivate var movieOutput: AVCaptureMovieFileOutput?
-    fileprivate var previewLayer: AVCaptureVideoPreviewLayer?
+    var previewLayer: AVCaptureVideoPreviewLayer?
     fileprivate var library: PHPhotoLibrary?
     
     fileprivate var cameraIsSetup = false
     fileprivate var cameraIsObservingDeviceOrientation = false
     
-    fileprivate var zoomScale       = CGFloat(1.0)
-    fileprivate var beginZoomScale  = CGFloat(1.0)
+    var zoomScale       = CGFloat(1.0)
+    var beginZoomScale  = CGFloat(1.0)
     fileprivate var maxZoomScale    = CGFloat(1.0)
-    
-    fileprivate var lastFocusRectangle:CAShapeLayer? = nil
     
     fileprivate func _tempFilePath() -> URL {
         let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("tempMovie\(Date().timeIntervalSince1970)").appendingPathExtension("mp4")
@@ -650,7 +634,7 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
         return currentCameraState == .ready || (currentCameraState == .notDetermined && showAccessPermissionPopupAutomatically)
     }
     
-    fileprivate func _setupCamera(_ completion: @escaping (Void) -> Void) {
+    fileprivate func _setupCamera(_ completion: @escaping () -> Void) {
         captureSession = AVCaptureSession()
         
         sessionQueue.async(execute: {
@@ -1113,23 +1097,8 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
 extension CameraManager: UIGestureRecognizerDelegate {
     // MARK: - Zoom
     
-    public func attachZoom(_ view: UIView) {
-        zoomGesture.addTarget(self, action: #selector(CameraManager._zoomStart(_:)))
-        view.addGestureRecognizer(zoomGesture)
-        zoomGesture.delegate = self
-    }
-    
-    open func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        
-        if gestureRecognizer.isKind(of: UIPinchGestureRecognizer.self) {
-            beginZoomScale = zoomScale;
-        }
-        
-        return true
-    }
-    
     @objc
-    fileprivate func _zoomStart(_ recognizer: UIPinchGestureRecognizer) {
+    func _zoomStart(_ recognizer: UIPinchGestureRecognizer) {
         guard let view = embeddingView,
             let previewLayer = previewLayer
             else { return }
@@ -1175,129 +1144,6 @@ extension CameraManager: UIGestureRecognizerDelegate {
         }
     }
     
-    // MARK: - Pan
-    
-    public func attachFocus(_ view: UIView) {
-        focusGesture.addTarget(self, action: #selector(CameraManager._focusStart(_:)))
-        view.addGestureRecognizer(focusGesture)
-        focusGesture.delegate = self
-    }
-    
-    @objc fileprivate func _focusStart(_ recognizer: UITapGestureRecognizer) {
-        
-        let device: AVCaptureDevice?
-        
-        switch cameraDevice {
-        case .back:
-            device = backCameraDevice
-        case .front:
-            device = frontCameraDevice
-        }
-        
-        if let validDevice = device {
-            
-            if let validPreviewLayer = previewLayer,
-                let view = recognizer.view
-            {
-                let pointInPreviewLayer = view.layer.convert(recognizer.location(in: view), to: validPreviewLayer)
-                let pointOfInterest = validPreviewLayer.captureDevicePointOfInterest(for: pointInPreviewLayer)
-                
-                do {
-                    try validDevice.lockForConfiguration()
-                    
-                    _showFocusRectangleAtPoint(pointInPreviewLayer, inLayer: validPreviewLayer)
-                    
-                    if validDevice.isFocusPointOfInterestSupported {
-                        validDevice.focusPointOfInterest = pointOfInterest;
-                    }
-                    
-                    if  validDevice.isExposurePointOfInterestSupported {
-                        validDevice.exposurePointOfInterest = pointOfInterest;
-                    }
-                    
-                    if validDevice.isFocusModeSupported(focusMode) {
-                        validDevice.focusMode = focusMode
-                    }
-                    
-                    if validDevice.isExposureModeSupported(exposureMode) {
-                        validDevice.exposureMode = exposureMode
-                    }
-                    
-                    validDevice.unlockForConfiguration()
-                }
-                catch let error {
-                    print(error)
-                }
-            }
-        }
-    }
-    
-    fileprivate func _showFocusRectangleAtPoint(_ focusPoint: CGPoint, inLayer layer: CALayer) {
-        
-        if let lastFocusRectangle = lastFocusRectangle {
-            
-            lastFocusRectangle.removeFromSuperlayer()
-            self.lastFocusRectangle = nil
-        }
-        
-        let size = CGSize(width: 75, height: 75)
-        let rect = CGRect(origin: CGPoint(x: focusPoint.x - size.width / 2.0, y: focusPoint.y - size.height / 2.0), size: size)
-        
-        let endPath = UIBezierPath(rect: rect)
-        endPath.move(to: CGPoint(x: rect.minX + size.width / 2.0, y: rect.minY))
-        endPath.addLine(to: CGPoint(x: rect.minX + size.width / 2.0, y: rect.minY + 5.0))
-        endPath.move(to: CGPoint(x: rect.maxX, y: rect.minY + size.height / 2.0))
-        endPath.addLine(to: CGPoint(x: rect.maxX - 5.0, y: rect.minY + size.height / 2.0))
-        endPath.move(to: CGPoint(x: rect.minX + size.width / 2.0, y: rect.maxY))
-        endPath.addLine(to: CGPoint(x: rect.minX + size.width / 2.0, y: rect.maxY - 5.0))
-        endPath.move(to: CGPoint(x: rect.minX, y: rect.minY + size.height / 2.0))
-        endPath.addLine(to: CGPoint(x: rect.minX + 5.0, y: rect.minY + size.height / 2.0))
-        
-        let startPath = UIBezierPath(cgPath: endPath.cgPath)
-        let scaleAroundCenterTransform = CGAffineTransform(translationX: -focusPoint.x, y: -focusPoint.y).concatenating(CGAffineTransform(scaleX: 2.0, y: 2.0).concatenating(CGAffineTransform(translationX: focusPoint.x, y: focusPoint.y)))
-        startPath.apply(scaleAroundCenterTransform)
-        
-        let shapeLayer = CAShapeLayer()
-        shapeLayer.path = endPath.cgPath
-        shapeLayer.fillColor = UIColor.clear.cgColor
-        shapeLayer.strokeColor = focusRectangleColor.cgColor
-        shapeLayer.lineWidth = 1.0
-        
-        layer.addSublayer(shapeLayer)
-        lastFocusRectangle = shapeLayer
-        
-        CATransaction.begin()
-        
-        CATransaction.setAnimationDuration(0.2)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseOut))
-        
-        CATransaction.setCompletionBlock() {
-            if shapeLayer.superlayer != nil {
-                shapeLayer.removeFromSuperlayer()
-                self.lastFocusRectangle = nil
-            }
-        }
-        
-        let appearPathAnimation = CABasicAnimation(keyPath: "path")
-        appearPathAnimation.fromValue = startPath.cgPath
-        appearPathAnimation.toValue = endPath.cgPath
-        shapeLayer.add(appearPathAnimation, forKey: "path")
-        
-        let appearOpacityAnimation = CABasicAnimation(keyPath: "opacity")
-        appearOpacityAnimation.fromValue = 0.0
-        appearOpacityAnimation.toValue = 1.0
-        shapeLayer.add(appearOpacityAnimation, forKey: "opacity")
-        
-        let disappearOpacityAnimation = CABasicAnimation(keyPath: "opacity")
-        disappearOpacityAnimation.fromValue = 1.0
-        disappearOpacityAnimation.toValue = 0.0
-        disappearOpacityAnimation.beginTime = CACurrentMediaTime() + 0.8
-        disappearOpacityAnimation.fillMode = kCAFillModeForwards
-        disappearOpacityAnimation.isRemovedOnCompletion = false
-        shapeLayer.add(disappearOpacityAnimation, forKey: "opacity")
-        
-        CATransaction.commit()
-    }
 }
 
 fileprivate extension AVCaptureDevice {
