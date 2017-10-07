@@ -29,7 +29,7 @@ public class CameraGestureController: NSObject {
         guard let manager = self.manager else {
             return
         }
-        zoomGesture.addTarget(self, action: #selector(manager._zoomStart(_:)))
+        zoomGesture.addTarget(manager, action: #selector(manager._zoomStart(_:)))
         view.addGestureRecognizer(zoomGesture)
         zoomGesture.delegate = self
     }

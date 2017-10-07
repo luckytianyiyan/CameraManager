@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		194F67FD1F757480005E1E8A /* CameraGestureController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 194F67FC1F757480005E1E8A /* CameraGestureController.swift */; };
 		454C1F4719E82E2500C81915 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454C1F4619E82E2500C81915 /* AppDelegate.swift */; };
 		454C1F4919E82E2500C81915 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454C1F4819E82E2500C81915 /* ViewController.swift */; };
 		454C1F4C19E82E2500C81915 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 454C1F4A19E82E2500C81915 /* Main.storyboard */; };
@@ -44,6 +45,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		194F67FC1F757480005E1E8A /* CameraGestureController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CameraGestureController.swift; path = camera/CameraGestureController.swift; sourceTree = SOURCE_ROOT; };
 		454C1F4119E82E2500C81915 /* camera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = camera.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		454C1F4519E82E2500C81915 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		454C1F4619E82E2500C81915 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 			children = (
 				D71DE8851AD677A7001E62F1 /* CameraManager.h */,
 				454C1F6619E8316A00C81915 /* CameraManager.swift */,
+				194F67FC1F757480005E1E8A /* CameraGestureController.swift */,
 				D71DE8831AD677A7001E62F1 /* Supporting Files */,
 			);
 			path = CameraManager;
@@ -269,6 +272,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				194F67FD1F757480005E1E8A /* CameraGestureController.swift in Sources */,
 				D71DE8A11AD677EF001E62F1 /* CameraManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
