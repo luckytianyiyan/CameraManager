@@ -35,7 +35,7 @@ public enum CameraOutputQuality: Int {
 }
 
 /// Class for handling iDevices custom camera usage
-open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
+open class CameraManager: NSObject {
     
     // MARK: - Public properties
     
@@ -115,53 +115,51 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
     /// Property to change camera device between front and back.
     open var cameraDevice = CameraDevice.back {
         didSet {
-            if cameraIsSetup {
-                if cameraDevice != oldValue {
-                    if animateCameraDeviceChange {
-                        _doFlipAnimation()
-                    }
-                    _updateCameraDevice(cameraDevice)
-                    _updateFlashMode(flashMode)
-                    _setupMaxZoomScale()
-                    _zoom(0)
-                }
+            guard cameraIsSetup, cameraDevice != oldValue else {
+                return
             }
+            if animateCameraDeviceChange {
+                _doFlipAnimation()
+            }
+            _updateCameraDevice(cameraDevice)
+            _updateFlashMode(flashMode)
+            _setupMaxZoomScale()
+            _zoom(0)
         }
     }
     
     /// Property to change camera flash mode.
     open var flashMode = CameraFlashMode.off {
         didSet {
-            if cameraIsSetup {
-                if flashMode != oldValue {
-                    _updateFlashMode(flashMode)
-                    print("Flash Mode: \(flashMode.rawValue)")
-                }
+            guard cameraIsSetup, flashMode != oldValue else {
+                return
             }
+            _updateFlashMode(flashMode)
+            print("Flash Mode: \(flashMode.rawValue)")
         }
     }
     
     /// Property to change camera output quality.
     open var cameraOutputQuality = CameraOutputQuality.high {
         didSet {
-            if cameraIsSetup {
-                if cameraOutputQuality != oldValue {
-                    _updateCameraQualityMode(cameraOutputQuality)
-                }
+            guard cameraIsSetup, cameraOutputQuality != oldValue else {
+                return
             }
+            _updateCameraQualityMode(cameraOutputQuality)
         }
     }
     
     /// Property to change camera output.
     open var cameraOutputMode = CameraOutputMode.stillImage {
         didSet {
-            if cameraIsSetup {
-                if cameraOutputMode != oldValue {
-                    _setupOutputMode(cameraOutputMode, oldCameraOutputMode: oldValue)
-                }
-                _setupMaxZoomScale()
-                _zoom(0)
+            guard cameraIsSetup else {
+                return
             }
+            if cameraOutputMode != oldValue {
+                _setupOutputMode(cameraOutputMode, oldCameraOutputMode: oldValue)
+            }
+            _setupMaxZoomScale()
+            _zoom(0)
         }
     }
     
@@ -485,39 +483,6 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
         guard let newQuality = CameraOutputQuality(rawValue: (cameraOutputQuality.rawValue+1)%3) else { return cameraOutputQuality }
         cameraOutputQuality = newQuality
         return cameraOutputQuality
-    }
-    
-    // MARK: - AVCaptureFileOutputRecordingDelegate
-    public func fileOutput(captureOutput: AVCaptureFileOutput, didStartRecordingTo fileURL: URL, from connections: [AVCaptureConnection]) {
-        captureSession?.beginConfiguration()
-        if flashMode != .off {
-            _updateFlashMode(flashMode)
-        }
-        captureSession?.commitConfiguration()
-    }
-    
-    open func fileOutput(_ captureOutput: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        _updateFlashMode(.off)
-        if let error = error {
-            _show(NSLocalizedString("Unable to save video to the iPhone", comment:""), message: error.localizedDescription)
-        }
-        else {
-            if writeFilesToPhoneLibrary {
-                if PHPhotoLibrary.authorizationStatus() == .authorized {
-                    saveVideoToLibrary(outputFileURL)
-                }
-                else {
-                    PHPhotoLibrary.requestAuthorization({ (autorizationStatus) in
-                        if autorizationStatus == .authorized {
-                            self.saveVideoToLibrary(outputFileURL)
-                        }
-                    })
-                }
-                
-            } else {
-                _executeVideoCompletionWithURL(outputFileURL, error: error as NSError?)
-            }
-        }
     }
     
     fileprivate func saveVideoToLibrary(_ fileURL: URL) {
@@ -1084,6 +1049,41 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate {
     deinit {
         stopAndRemoveCaptureSession()
         _stopFollowingDeviceOrientation()
+    }
+}
+
+extension CameraManager: AVCaptureFileOutputRecordingDelegate {
+    // MARK: - AVCaptureFileOutputRecordingDelegate
+    public func fileOutput(captureOutput: AVCaptureFileOutput, didStartRecordingTo fileURL: URL, from connections: [AVCaptureConnection]) {
+        captureSession?.beginConfiguration()
+        if flashMode != .off {
+            _updateFlashMode(flashMode)
+        }
+        captureSession?.commitConfiguration()
+    }
+    
+    open func fileOutput(_ captureOutput: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
+        _updateFlashMode(.off)
+        if let error = error {
+            _show(NSLocalizedString("Unable to save video to the iPhone", comment:""), message: error.localizedDescription)
+        }
+        else {
+            if writeFilesToPhoneLibrary {
+                if PHPhotoLibrary.authorizationStatus() == .authorized {
+                    saveVideoToLibrary(outputFileURL)
+                }
+                else {
+                    PHPhotoLibrary.requestAuthorization({ (autorizationStatus) in
+                        if autorizationStatus == .authorized {
+                            self.saveVideoToLibrary(outputFileURL)
+                        }
+                    })
+                }
+                
+            } else {
+                _executeVideoCompletionWithURL(outputFileURL, error: error as NSError?)
+            }
+        }
     }
 }
 
