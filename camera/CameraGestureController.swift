@@ -29,15 +29,19 @@ public class CameraGestureController: NSObject {
         guard let manager = self.manager else {
             return
         }
-        zoomGesture.addTarget(manager, action: #selector(manager._zoomStart(_:)))
-        view.addGestureRecognizer(zoomGesture)
-        zoomGesture.delegate = self
+        DispatchQueue.main.async {
+            self.zoomGesture.addTarget(manager, action: #selector(manager._zoomStart(_:)))
+            view.addGestureRecognizer(self.zoomGesture)
+            self.zoomGesture.delegate = self
+        }
     }
     
     public func attachFocus(_ view: UIView) {
-        focusGesture.addTarget(self, action: #selector(_focusStart(_:)))
-        view.addGestureRecognizer(focusGesture)
-        focusGesture.delegate = self
+        DispatchQueue.main.async {
+            self.focusGesture.addTarget(self, action: #selector(self._focusStart(_:)))
+            view.addGestureRecognizer(self.focusGesture)
+            self.focusGesture.delegate = self
+        }
     }
     
     // MARK: - Pan
@@ -62,7 +66,7 @@ public class CameraGestureController: NSObject {
                 let view = recognizer.view
             {
                 let pointInPreviewLayer = view.layer.convert(recognizer.location(in: view), to: validPreviewLayer)
-                let pointOfInterest = validPreviewLayer.captureDevicePointOfInterest(for: pointInPreviewLayer)
+                let pointOfInterest = validPreviewLayer.captureDevicePointConverted(fromLayerPoint: pointInPreviewLayer)
                 
                 do {
                     try validDevice.lockForConfiguration()
