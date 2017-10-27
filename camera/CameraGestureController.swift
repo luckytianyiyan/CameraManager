@@ -15,12 +15,12 @@ public protocol CameraGestureControllerDelegate: UIGestureRecognizerDelegate {
 public class CameraGestureController: NSObject {
     private(set) lazy var zoomGesture = UIPinchGestureRecognizer()
     private(set) lazy var focusGesture = UITapGestureRecognizer()
-    fileprivate weak var manager: CameraManager?
+    fileprivate weak var manager: BaseCameraManager?
     fileprivate var lastFocusRectangle: CAShapeLayer? = nil
     open var focusRectangleColor: UIColor = UIColor(red:1, green:0.83, blue:0, alpha:0.95)
     public weak var delegate: CameraGestureControllerDelegate?
     
-    init(manager: CameraManager) {
+    init(manager: BaseCameraManager) {
         super.init()
         self.manager = manager
     }
