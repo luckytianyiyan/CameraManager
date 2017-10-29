@@ -7,6 +7,10 @@
 
 import AVFoundation
 
+public enum CameraTorchMode: Int {
+    case off, on, auto
+}
+
 open class ScanCameraManager: BaseCameraManager {
     
     private var metadataOutput: AVCaptureMetadataOutput?
@@ -14,6 +18,23 @@ open class ScanCameraManager: BaseCameraManager {
     public var metadataCompletion: ((_ metadataObjects: [AVMetadataObject]) -> Void)?
     public var brightnessChange: ((_ value: CGFloat) -> Void)?
     private(set) var metadataObjectTypes: [AVMetadataObject.ObjectType]
+    
+    /// The Bool property to determine if current device has flash.
+    open var hasTorch: Bool = {
+        let hasTorchDevices = AVCaptureDevice.videoDevices.filter { $0.hasTorch }
+        return !hasTorchDevices.isEmpty
+    }()
+    
+    /// Property to change camera flash mode.
+    open var torchMode = CameraTorchMode.off {
+        didSet {
+            guard cameraIsSetup, torchMode != oldValue else {
+                return
+            }
+            updateTorchMode(torchMode)
+            print("Torch Mode: \(torchMode.rawValue)")
+        }
+    }
     
     override var connection: AVCaptureConnection? {
         return metadataOutput?.connection(with: .metadata)
@@ -58,6 +79,26 @@ open class ScanCameraManager: BaseCameraManager {
         super.cleanAllDatas()
         metadataOutput = nil
         videoDataOutput = nil
+    }
+    
+    func updateTorchMode(_ torchMode: CameraTorchMode) {
+        captureSession?.beginConfiguration()
+        defer { captureSession?.commitConfiguration() }
+        for captureDevice in AVCaptureDevice.videoDevices  {
+            guard let avTorchMode = AVCaptureDevice.TorchMode(rawValue: torchMode.rawValue) else {
+                continue
+            }
+            if captureDevice.isTorchModeSupported(avTorchMode) {
+                do {
+                    try captureDevice.lockForConfiguration()
+                } catch {
+                    return
+                }
+                captureDevice.torchMode = avTorchMode
+                captureDevice.unlockForConfiguration()
+            }
+        }
+        
     }
 }
 

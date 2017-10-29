@@ -708,8 +708,8 @@ extension BaseCameraManager: UIGestureRecognizerDelegate {
     
 }
 
-fileprivate extension AVCaptureDevice {
-    fileprivate static var videoDevices: [AVCaptureDevice] {
+extension AVCaptureDevice {
+    static var videoDevices: [AVCaptureDevice] {
         return AVCaptureDevice.devices(for: AVMediaType.video)
     }
 }
