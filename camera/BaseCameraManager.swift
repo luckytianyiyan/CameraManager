@@ -416,6 +416,8 @@ open class BaseCameraManager: NSObject {
     }
     
     func setupOutputMode() {
+        _updateCameraQualityMode(cameraOutputQuality)
+        _orientationChanged()
     }
     
     func setupOutputs() {

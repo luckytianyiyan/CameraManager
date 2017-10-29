@@ -111,8 +111,7 @@ open class CameraManager: BaseCameraManager {
             }
         }
         captureSession?.commitConfiguration()
-        _updateCameraQualityMode(cameraOutputQuality)
-        _orientationChanged()
+        super.setupOutputMode()
     }
     
     override func preset(for quality: CameraOutputQuality) -> AVCaptureSession.Preset {
@@ -170,8 +169,7 @@ open class CameraManager: BaseCameraManager {
             }
         }
         captureSession?.commitConfiguration()
-        _updateCameraQualityMode(cameraOutputQuality)
-        _orientationChanged()
+        setupOutputMode()
     }
     
     override func cleanAllDatas() {
