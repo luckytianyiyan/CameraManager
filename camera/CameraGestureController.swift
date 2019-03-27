@@ -167,7 +167,7 @@ public class CameraGestureController: NSObject {
 
 extension CameraGestureController: UIGestureRecognizerDelegate {
     open func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        if let delegate = self.delegate, delegate.gestureRecognizerShouldBegin?(gestureRecognizer) == false {
+        if let delegate = self.delegate, delegate.gestureRecognizerShouldBegin(gestureRecognizer) == false {
             return false
         }
         if let manager = self.manager, gestureRecognizer.isKind(of: UIPinchGestureRecognizer.self) {
