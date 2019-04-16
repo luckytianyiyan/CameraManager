@@ -360,7 +360,7 @@ open class BaseCameraManager: NSObject {
     
     fileprivate func _startFollowingDeviceOrientation() {
         if shouldRespondToOrientationChanges && !cameraIsObservingDeviceOrientation {
-            NotificationCenter.default.addObserver(self, selector: #selector(CameraManager._orientationChanged), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+            NotificationCenter.default.addObserver(self, selector: #selector(CameraManager._orientationChanged), name: UIDevice.orientationDidChangeNotification, object: nil)
             cameraIsObservingDeviceOrientation = true
         }
     }
@@ -369,7 +369,7 @@ open class BaseCameraManager: NSObject {
         guard cameraIsObservingDeviceOrientation else {
             return
         }
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
         cameraIsObservingDeviceOrientation = false
     }
     
@@ -397,7 +397,7 @@ open class BaseCameraManager: NSObject {
     }
     
     fileprivate func _checkIfCameraIsAvailable() -> CameraState {
-        let deviceHasCamera = UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.rear) || UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.front)
+        let deviceHasCamera = UIImagePickerController.isCameraDeviceAvailable(UIImagePickerController.CameraDevice.rear) || UIImagePickerController.isCameraDeviceAvailable(UIImagePickerController.CameraDevice.front)
         if deviceHasCamera {
             let authorizationStatus = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
             let userAgreedToUseIt = authorizationStatus == .authorized
@@ -522,7 +522,7 @@ open class BaseCameraManager: NSObject {
             
             UIView.transition(with: cameraTransitionView,
                               duration: 0.5,
-                              options: UIViewAnimationOptions.transitionFlipFromLeft,
+                              options: UIView.AnimationOptions.transitionFlipFromLeft,
                               animations: nil,
                               completion: { (finished) -> Void in
                                 self._removeCameraTransistionView()

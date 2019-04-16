@@ -47,7 +47,7 @@ open class CameraManager: BaseCameraManager {
     }
     
     /// Property to check video recording duration when in progress
-    open var recordedDuration : CMTime { return movieOutput?.recordedDuration ?? kCMTimeZero }
+    open var recordedDuration : CMTime { return movieOutput?.recordedDuration ?? CMTime.zero }
     
     /// Property to check video recording file size when in progress
     open var recordedFileSize : Int64 { return movieOutput?.recordedFileSize ?? 0 }
@@ -73,7 +73,7 @@ open class CameraManager: BaseCameraManager {
         }
         if (movieOutput == nil) {
             movieOutput = AVCaptureMovieFileOutput()
-            movieOutput?.movieFragmentInterval = kCMTimeInvalid
+            movieOutput?.movieFragmentInterval = CMTime.invalid
         }
         if library == nil {
             library = PHPhotoLibrary.shared()
@@ -355,7 +355,7 @@ open class CameraManager: BaseCameraManager {
             return movieOutput
         }
         let newMoviewOutput = AVCaptureMovieFileOutput()
-        newMoviewOutput.movieFragmentInterval = kCMTimeInvalid
+        newMoviewOutput.movieFragmentInterval = CMTime.invalid
         movieOutput = newMoviewOutput
         if let captureSession = captureSession {
             if captureSession.canAddOutput(newMoviewOutput) {

@@ -110,7 +110,7 @@ extension ScanCameraManager: AVCaptureMetadataOutputObjectsDelegate {
 
 extension ScanCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard let dict = CMCopyDictionaryOfAttachments(nil, sampleBuffer, kCMAttachmentMode_ShouldPropagate) else {
+        guard let dict = CMCopyDictionaryOfAttachments(allocator: nil, target: sampleBuffer, attachmentMode: kCMAttachmentMode_ShouldPropagate) else {
             return
         }
         let metadata = NSDictionary(dictionary: dict)
